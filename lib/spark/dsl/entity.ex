@@ -194,9 +194,11 @@ defmodule Spark.Dsl.Entity do
 
   @type links :: keyword([String.t()]) | nil
 
-  @type modules :: [atom]
+  @type module_path :: [atom, ...]
 
-  @type no_depend_modules :: [atom]
+  @type modules :: [atom | module_path]
+
+  @type no_depend_modules :: [atom | module_path]
 
   @type recursive_as :: atom | nil
 

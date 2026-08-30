@@ -24,7 +24,13 @@ defmodule Spark.Dsl.Extension.SectionOption do
           Spark.Dsl.Extension.expand_alias_no_require(value, caller)
 
         true ->
-          value
+          Spark.Dsl.Extension.expand_module_paths(
+            value,
+            field,
+            section_modules,
+            section_no_depend_modules,
+            caller
+          )
       end
 
     Spark.CodeHelpers.lift_functions(value, field, caller)

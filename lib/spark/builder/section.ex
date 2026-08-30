@@ -54,7 +54,9 @@ defmodule Spark.Builder.Section do
     - `:docs` - Additional documentation
     - `:imports` - Modules to import in the section's DSL scope
     - `:modules` - Schema fields containing module references
-    - `:no_depend_modules` - Module fields that should not create dependencies
+    - `:no_depend_modules` - Module fields that should not create dependencies. An element may
+      be an atom (the whole field) or a `[field, key, ...]` path into the field's value, so that
+      only the module alias at that path loses its compile dependency.
   """
   @moduledoc since: "2.5.0"
 
@@ -98,8 +100,8 @@ defmodule Spark.Builder.Section do
     singleton_entity_keys: [type: {:list, :atom}, default: []],
     after_define: [type: {:custom, __MODULE__, :cast_after_define, []}],
     imports: [type: {:list, :atom}, default: []],
-    modules: [type: {:list, :atom}, default: []],
-    no_depend_modules: [type: {:list, :atom}, default: []],
+    modules: [type: {:list, {:or, [:atom, {:list, :atom}]}}, default: []],
+    no_depend_modules: [type: {:list, {:or, [:atom, {:list, :atom}]}}, default: []],
     examples: [type: {:list, :string}, default: []],
     describe: [type: :string, default: ""],
     snippet: [type: :string, default: ""],

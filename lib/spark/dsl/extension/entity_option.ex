@@ -24,7 +24,13 @@ defmodule Spark.Dsl.Extension.EntityOption do
           Spark.Dsl.Extension.expand_alias_no_require(value, caller)
 
         true ->
-          value
+          Spark.Dsl.Extension.expand_module_paths(
+            value,
+            field,
+            modules,
+            no_depend_modules,
+            caller
+          )
       end
 
     Spark.CodeHelpers.lift_functions(value, field, caller)

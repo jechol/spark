@@ -117,9 +117,11 @@ defmodule Spark.Dsl.Section do
 
   @type examples() :: [String.t()]
 
-  @type modules :: [atom]
+  @type modules :: [atom | module_path()]
 
-  @type no_depend_modules() :: [atom]
+  @type module_path() :: [atom, ...]
+
+  @type no_depend_modules() :: [atom | module_path()]
 
   @type auto_set_fields() :: keyword(any)
 

@@ -1486,7 +1486,13 @@ defmodule Spark.Dsl.Extension do
                       Spark.Dsl.Extension.expand_alias_no_require(arg_value, __CALLER__)
 
                     true ->
-                      arg_value
+                      Spark.Dsl.Extension.expand_module_paths(
+                        arg_value,
+                        key,
+                        entity.modules,
+                        entity.no_depend_modules,
+                        __CALLER__
+                      )
                   end
 
                 {arg_value, new_function} =
@@ -1551,7 +1557,14 @@ defmodule Spark.Dsl.Extension do
                     {key, Spark.Dsl.Extension.expand_alias_no_require(value, __CALLER__)}
 
                   true ->
-                    {key, value}
+                    {key,
+                     Spark.Dsl.Extension.expand_module_paths(
+                       value,
+                       key,
+                       entity.modules,
+                       entity.no_depend_modules,
+                       __CALLER__
+                     )}
                 end
               end)
 
@@ -1769,6 +1782,43 @@ defmodule Spark.Dsl.Extension do
         other
     end)
   end
+
+  @doc """
+  중첩 module 참조에 경로 단위 dependency policy를 적용한다.
+
+  `modules`와 `no_depend_modules`의 원소는 atom이거나 `[field, key, ...]` 경로다. Atom은
+  field 값 전체에 policy를 적용하고, 경로는 그 위치의 module alias에만 적용한다. 하나의 field
+  값 안에 dependency 요구가 다른 module 참조가 섞여 있을 때 쓴다.
+
+      no_depend_modules: [:change, [:constraints, :instance_of]]
+
+  경로로 지정하지 않은 나머지 alias는 그대로 두므로 compile dependency가 유지된다. 값이
+  keyword list literal이 아니면(변수나 함수 호출) 탐색할 수 없으므로 변경하지 않는다.
+  """
+  def expand_module_paths(value, field, modules, no_depend_modules, env) do
+    value
+    |> apply_module_paths(field, modules, &expand_alias/2, env)
+    |> apply_module_paths(field, no_depend_modules, &expand_alias_no_require/2, env)
+  end
+
+  defp apply_module_paths(value, field, policies, expander, env) do
+    policies
+    |> Enum.filter(&match?([^field, _ | _], &1))
+    |> Enum.reduce(value, fn [_field | rest], acc ->
+      update_ast_path(acc, rest, &expander.(&1, env))
+    end)
+  end
+
+  defp update_ast_path(ast, [], fun), do: fun.(ast)
+
+  defp update_ast_path(ast, [key | rest], fun) when is_list(ast) do
+    Enum.map(ast, fn
+      {^key, nested} -> {key, update_ast_path(nested, rest, fun)}
+      other -> other
+    end)
+  end
+
+  defp update_ast_path(ast, _path, _fun), do: ast
 
   @doc false
   def do_expand(ast, env) do
